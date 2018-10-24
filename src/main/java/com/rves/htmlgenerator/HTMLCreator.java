@@ -70,7 +70,7 @@ public class HTMLCreator {
      * Создает html страницу со списком сущностей
      * @param clazz класс сущности
      */
-    private void createList(Class clazz) {
+    void createList(Class clazz) {
         createFolders(clazz);
         StringBuilder field = new StringBuilder(System.lineSeparator());
         StringBuilder fieldValues = new StringBuilder(System.lineSeparator());
