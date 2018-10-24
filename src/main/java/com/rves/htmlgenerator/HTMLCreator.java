@@ -12,17 +12,15 @@ import java.lang.reflect.Field;
 public class HTMLCreator {
 
     {
-
+        String DIRECTORY_HTML_FRAGMENTS = "templates/doc/fragmentsHTML/";
         CONSTANT_CARD_FIELD         = getFile(DIRECTORY_HTML_FRAGMENTS + "frgCardField");
         CONSTANT_FORM_FIELD         = getFile(DIRECTORY_HTML_FRAGMENTS + "frgFormField");
         CONSTANT_LIST_FIELD_VALUE   = getFile(DIRECTORY_HTML_FRAGMENTS + "frgListFieldVal");
         CONSTANT_LIST_FIELD         = getFile(DIRECTORY_HTML_FRAGMENTS + "frgListField");
-
     }
 
-    File mainResourcesDirectory                     = new File("src/main/resources");
-    private static String DIRECTORY_HTML_FRAGMENTS  = "templates/doc/fragmentsHTML/";
-    private  String DIRECTORY_PATH                  = (new StringBuilder(mainResourcesDirectory.getAbsolutePath()).append("templates/doc/webPages/%pathClassName%Dir/")).toString();
+    private File mainResourcesDirectory             = new File("src/main/resources");
+    private  String DIRECTORY_PATH                  = (new StringBuilder(mainResourcesDirectory.getAbsolutePath()).append("\\templates\\doc\\webPages\\%pathClassName%Dir\\")).toString();
     private static String DIRECTORY_STATIC_HTML     = "templates/doc/staticHTML/%staticFragmentName%" ;
     private static String CONSTANT_LIST_FIELD ;
     private static String CONSTANT_LIST_FIELD_VALUE ;
@@ -46,19 +44,16 @@ public class HTMLCreator {
 
     private void createFolders(Class clazz) {
         StringBuilder field = new StringBuilder();
-        field.append((DIRECTORY_PATH + "webPages/%pathClassName%Dir/").replace("%pathClassName%",clazz.getSimpleName().toLowerCase()));
-        File theDirClazz = new File(field.toString());
-        // if the directory does not exist, create it
-        folderIsExists(theDirClazz);
+        String filePath = field.append((DIRECTORY_PATH ).replace("%pathClassName%",clazz.getSimpleName().toLowerCase())).toString();
+        folderIsExists(new File(filePath));
     }
 
-    private void folderIsExists(File f) {
-        if (!f.exists()) {
-            System.out.println("creating directory: " + f.getName());
+    private void folderIsExists(File file) {
+        if (!file.exists()) {
+            System.out.println("creating directory: " + file.getName());
             boolean result = false;
-
             try{
-                f.mkdir();
+                file.mkdir();
                 result = true;
             }
             catch(SecurityException se){
@@ -75,14 +70,17 @@ public class HTMLCreator {
      * Создает html страницу со списком сущностей
      * @param clazz класс сущности
      */
-    protected void createList(Class clazz) {
+    private void createList(Class clazz) {
         createFolders(clazz);
         StringBuilder field = new StringBuilder(System.lineSeparator());
         StringBuilder fieldValues = new StringBuilder(System.lineSeparator());
+        StringBuilder path = new StringBuilder();
+        path.append(DIRECTORY_PATH.replace("%pathClassName%", clazz.getSimpleName().toLowerCase())).append(Thread.currentThread().getStackTrace()[1].getMethodName()).append( ".HTML");
+
 
         try {
             writer = new BufferedWriter(new OutputStreamWriter(
-                    new FileOutputStream(DIRECTORY_PATH.replace("%pathClassName%",clazz.getSimpleName().toLowerCase())+Thread.currentThread().getStackTrace()[1].getMethodName()+".HTML"), "utf-8"));
+                    new FileOutputStream(path.toString()), "utf-8"));
 
             Field[] fields = clazz.getDeclaredFields();
 
@@ -101,7 +99,8 @@ public class HTMLCreator {
 
             writer.write(result);
         } catch (IOException  ex) {
-            System.out.println("Ups... " + ex);
+            ex.printStackTrace();
+
         } finally {
             try {writer.close();} catch (Exception ex) {/*ignore*/}
         }
@@ -181,9 +180,9 @@ public class HTMLCreator {
 
         HTMLCreator creator = new HTMLCreator();
         creator.createList(Test.class);
-//        creator.createForm(User.class);
-//        creator.createCard(User.class);
-//        creator.createCard(Room.class);
+        creator.createForm(User.class);
+        creator.createCard(User.class);
+        creator.createCard(Room.class);
     }
 
     /**
