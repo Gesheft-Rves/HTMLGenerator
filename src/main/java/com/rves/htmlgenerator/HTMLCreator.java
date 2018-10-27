@@ -1,8 +1,5 @@
 package com.rves.htmlgenerator;
 
-
-
-import com.rves.htmlgenerator.pojo.Test;
 import org.apache.commons.io.IOUtils;
 
 import java.io.*;
@@ -11,29 +8,22 @@ import java.lang.reflect.Field;
 
 public class HTMLCreator {
 
-    {
-        String DIRECTORY_HTML_FRAGMENTS = "templates/doc/fragmentsHTML/";
-        CONSTANT_CARD_FIELD         = getFile(DIRECTORY_HTML_FRAGMENTS + "frgCardField");
-        CONSTANT_FORM_FIELD         = getFile(DIRECTORY_HTML_FRAGMENTS + "frgFormField");
-        CONSTANT_LIST_FIELD_VALUE   = getFile(DIRECTORY_HTML_FRAGMENTS + "frgListFieldVal");
-        CONSTANT_LIST_FIELD         = getFile(DIRECTORY_HTML_FRAGMENTS + "frgListField");
-    }
-
-    private File mainResourcesDirectory             = new File("src/main/resources");
-    private  String DIRECTORY_PATH                  = (new StringBuilder(mainResourcesDirectory.getAbsolutePath()).append("\\templates\\doc\\webPages\\%pathClassName%Dir\\")).toString();
-    private static String DIRECTORY_STATIC_HTML     = "templates/doc/staticHTML/%staticFragmentName%" ;
-    private static String CONSTANT_LIST_FIELD ;
-    private static String CONSTANT_LIST_FIELD_VALUE ;
-    private static String CONSTANT_FORM_FIELD  ;
-    private static String CONSTANT_CARD_FIELD ;
+    private static final String DIRECTORY_HTML_FRAGMENTS  = "templates/doc/fragmentsHTML/";
+    private static final File mainResourcesDirectory      = new File("src/main/resources");
+    private static final String DIRECTORY_PATH            = (new StringBuilder(mainResourcesDirectory.getAbsolutePath()).append("\\templates\\doc\\webPages\\%pathClassName%Dir\\")).toString();
+    private static final String DIRECTORY_STATIC_HTML     = "templates/doc/staticHTML/%staticFragmentName%" ;
+    private static final String LIST_FIELD                = getFile(DIRECTORY_HTML_FRAGMENTS + "frgListField");
+    private static final String LIST_FIELD_VALUE          = getFile(DIRECTORY_HTML_FRAGMENTS + "frgListFieldVal");
+    private static final String FORM_FIELD                = getFile(DIRECTORY_HTML_FRAGMENTS + "frgFormField");
+    private static final String CARD_FIELD                = getFile(DIRECTORY_HTML_FRAGMENTS + "frgCardField");
 
 
-    private Writer writer = null;
+    private Writer writer ;
 
 
-    private String getFile(String fileName){
+    private static String getFile(String fileName){
         String result = "";
-        ClassLoader classLoader = getClass().getClassLoader();
+        ClassLoader classLoader = HTMLCreator.class.getClassLoader();
         try {
             result = IOUtils.toString(classLoader.getResourceAsStream(fileName));
         } catch (IOException e) {
@@ -45,49 +35,40 @@ public class HTMLCreator {
     private void createFolders(Class clazz) {
         StringBuilder field = new StringBuilder();
         String filePath = field.append((DIRECTORY_PATH ).replace("%pathClassName%",clazz.getSimpleName().toLowerCase())).toString();
-        folderIsExists(new File(filePath));
+        File directory = new File(filePath);
+        if (!directory.exists()) directory.mkdir();
     }
-
-    private void folderIsExists(File file) {
-        if (!file.exists()) {
-            System.out.println("creating directory: " + file.getName());
-            boolean result = false;
-            try{
-                file.mkdir();
-                result = true;
-            }
-            catch(SecurityException se){
-                //handle it
-            }
-            if(result) {
-                System.out.println("DIR created");
-            }
-        }
-    }
-
 
     /**
      * Создает html страницу со списком сущностей
      * @param clazz класс сущности
      */
-    private void createList(Class clazz) {
+    private void createListPage(Class clazz) {
         createFolders(clazz);
         StringBuilder field = new StringBuilder(System.lineSeparator());
         StringBuilder fieldValues = new StringBuilder(System.lineSeparator());
         StringBuilder path = new StringBuilder();
-        path.append(DIRECTORY_PATH.replace("%pathClassName%", clazz.getSimpleName().toLowerCase())).append(Thread.currentThread().getStackTrace()[1].getMethodName()).append( ".HTML");
 
+        path
+                .append(DIRECTORY_PATH.replace("%pathClassName%",clazz.getSimpleName().toLowerCase()))
+                .append(Thread.currentThread().getStackTrace()[1].getMethodName())
+                .append(".HTML");
 
         try {
-            writer = new BufferedWriter(new OutputStreamWriter(
-                    new FileOutputStream(path.toString()), "utf-8"));
+            writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(path.toString()), "utf-8"));
 
             Field[] fields = clazz.getDeclaredFields();
 
             for (Field f:fields) {
                 f.setAccessible(true);
-                field.append(CONSTANT_LIST_FIELD.replace("%fieldName%", f.getName())).append(System.lineSeparator());
-                fieldValues.append(CONSTANT_LIST_FIELD_VALUE.replace("%fieldName%", f.getName())).append(System.lineSeparator());
+
+                field
+                        .append(LIST_FIELD.replace("%fieldName%", f.getName()))
+                        .append(System.lineSeparator());
+
+                fieldValues
+                        .append(LIST_FIELD_VALUE.replace("%fieldName%", f.getName()))
+                        .append(System.lineSeparator());
             }
 
             String result  =  getFile(DIRECTORY_STATIC_HTML.replace("%staticFragmentName%","list.txt"));
@@ -102,7 +83,9 @@ public class HTMLCreator {
             ex.printStackTrace();
 
         } finally {
-            try {writer.close();} catch (Exception ex) {/*ignore*/}
+            try {writer.close();} catch (Exception ex) {
+                ex.printStackTrace();
+            }
         }
     }
 
@@ -110,20 +93,27 @@ public class HTMLCreator {
      * Создает html страницу с формой сущности
      * @param clazz класс сущности
      */
-    private void createForm(Class clazz) {
+    private void createFormPage(Class clazz) {
         createFolders(clazz);
         StringBuilder field = new StringBuilder(System.lineSeparator());
+        StringBuilder path = new StringBuilder();
+
+        path
+                .append(DIRECTORY_PATH.replace("%pathClassName%",clazz.getSimpleName().toLowerCase()))
+                .append(Thread.currentThread().getStackTrace()[1].getMethodName())
+                .append(".HTML");
 
         try {
-
-            writer = new BufferedWriter(new OutputStreamWriter(
-                    new FileOutputStream(DIRECTORY_PATH.replace("%pathClassName%",clazz.getSimpleName().toLowerCase())+Thread.currentThread().getStackTrace()[1].getMethodName()+".HTML"), "utf-8"));
+            writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(path.toString()), "utf-8"));
 
             Field[] fields = clazz.getDeclaredFields();
 
             for (Field f:fields) {
                 f.setAccessible(true);
-                field.append(CONSTANT_FORM_FIELD.replace("%fieldName%", f.getName())).append(System.lineSeparator());
+
+                field
+                        .append(FORM_FIELD.replace("%fieldName%", f.getName()))
+                        .append(System.lineSeparator());
             }
 
             String result  =  getFile(DIRECTORY_STATIC_HTML.replace("%staticFragmentName%","form.txt"));
@@ -134,9 +124,11 @@ public class HTMLCreator {
             writer.write(result);
 
         } catch (IOException  ex) {
-            // Report
+            ex.printStackTrace();
         } finally {
-            try {writer.close();} catch (Exception ex) {/*ignore*/}
+            try {writer.close();} catch (Exception ex) {
+                ex.printStackTrace();
+            }
         }
     }
 
@@ -144,17 +136,24 @@ public class HTMLCreator {
      * Создает html страницу с формой сущности
      * @param clazz класс сущности
      */
-    private void createCard(Class clazz) {
+    private void createCardPage(Class clazz) {
         createFolders(clazz);
         StringBuilder field = new StringBuilder(System.lineSeparator());
+        StringBuilder path = new StringBuilder();
+
+        path
+                .append(DIRECTORY_PATH.replace("%pathClassName%",clazz.getSimpleName().toLowerCase()))
+                .append(Thread.currentThread().getStackTrace()[1].getMethodName())
+                .append(".HTML");
+
         try {
-            writer = new BufferedWriter(new OutputStreamWriter(
-                    new FileOutputStream(DIRECTORY_PATH.replace("%pathClassName%",clazz.getSimpleName().toLowerCase())+Thread.currentThread().getStackTrace()[1].getMethodName()+".HTML"), "utf-8"));
+            writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(path.toString()), "utf-8"));
+
             Field[] fields = clazz.getDeclaredFields();
 
             for (Field f:fields) {
                 f.setAccessible(true);
-                field.append(CONSTANT_CARD_FIELD.replace("%classNameToLowerCase%", clazz.getSimpleName().toLowerCase())
+                field.append(CARD_FIELD.replace("%classNameToLowerCase%", clazz.getSimpleName().toLowerCase())
                         .replace("%className%", clazz.getSimpleName())
                         .replace("%fieldName%", f.getName())).append(System.lineSeparator());
             }
@@ -166,36 +165,12 @@ public class HTMLCreator {
 
             writer.write(result);
         } catch (IOException  ex) {
-            // Report
+            ex.printStackTrace();
         } finally {
-            try {writer.close();} catch (Exception ex) {/*ignore*/}
+            try {writer.close();} catch (Exception ex) {
+                ex.printStackTrace();
+            }
         }
-    }
-
-    /**
-     * пример вызова методов:
-     */
-
-    public static void main(String[] args) {
-
-        HTMLCreator creator = new HTMLCreator();
-        creator.createList(Test.class);
-        creator.createForm(User.class);
-        creator.createCard(User.class);
-        creator.createCard(Room.class);
-    }
-
-    /**
-     * Пример сущности:
-     */
-    static class User {
-        String username;
-        String password;
-    }
-
-    static class Room {
-        int no;
-        String building;
     }
 }
 
